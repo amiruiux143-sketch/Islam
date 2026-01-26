@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="az">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Nəsihatlər Mədrəsəsi | LMS Pro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root { --primary: #6366F1; --bg: #F8FAFC; }
+        * { -webkit-tap-highlight-color: transparent; font-family: 'Plus Jakarta Sans', sans-serif; }
+        body { background: var(--bg); color: #0F172A; margin: 0; overflow-x: hidden; }
+        
+        .sidebar { width: 280px; background: white; height: 100vh; position: fixed; left: 0; top: 0; border-right: 1px solid #E2E8F0; z-index: 50; }
+        .nav-item { display: flex; align-items: center; gap: 12px; padding: 14px 20px; margin: 4px 16px; border-radius: 16px; color: #64748B; font-weight: 600; cursor: pointer; transition: 0.2s; }
+        .nav-item.active { background: var(--primary); color: white; box-shadow: 0 10px 20px -5px rgba(99, 102, 241, 0.4); }
+        
+        .main-content { margin-left: 280px; padding-top: 20px; }
+        .mobile-dock { display: none; position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); width: 92%; background: rgba(255,255,255,0.95); backdrop-filter: blur(20px); height: 75px; border-radius: 28px; z-index: 100; box-shadow: 0 20px 40px rgba(0,0,0,0.1); justify-content: space-around; align-items: center; border: 1px solid white; }
+        
+        @media (max-width: 1024px) {
+            .sidebar { display: none; }
+            .main-content { margin-left: 0; padding-bottom: 120px; }
+            .mobile-dock { display: flex; }
+        }
+
+        .viewport { display: none; padding: 20px; animation: slideUp 0.4s ease-out; }
+        .viewport.active { display: block; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+
+        .glass-card { background: white; border-radius: 30px; border: 1px solid #F1F5F9; box-shadow: 0 4px 20px rgba(0,0,0,0.02); }
+        .btn-action { background: var(--primary); color: white; border-radius: 18px; padding: 14px 24px; font-weight: 700; transition: 0.3s; display: inline-flex; align-items: center; gap: 8px; border: none; cursor: pointer; }
+        
+        .schedule-table { width: 100%; border-collapse: separate; border-spacing: 0 8px; }
+        .schedule-table tr { background: #fdfdfd; transition: 0.2s; }
+        .schedule-table td { padding: 16px; border-top: 1px solid #f1f5f9; border-bottom: 1px solid #f1f5f9; }
+        .schedule-table td:first-child { border-left: 1px solid #f1f5f9; border-radius: 15px 0 0 15px; }
+        .schedule-table td:last-child { border-right: 1px solid #f1f5f9; border-radius: 0 15px 15px 0; }
+        
+        .btn-link { background: #EEF2FF; color: #6366F1; padding: 8px 16px; border-radius: 12px; font-size: 12px; font-weight: 800; display: inline-flex; align-items: center; gap: 5px; }
+    </style>
+</head>
+<body>
+
+    <div id="auth-screen" class="fixed inset-0 z-[1000] bg-slate-900 flex items-center justify-center p-6">
+        <div class="bg-white w-full max-w-sm rounded-[45px] p-10 text-center shadow-2xl">
+            <div class="w-16 h-16 bg-indigo-600 rounded-2xl mx-auto mb-6 flex items-center justify-center text-white shadow-xl"><i data-lucide="shield-check" class="w-8 h-8"></i></div>
+            <h1 class="text-2xl font-black mb-2">Xoş Gəldiniz</h1>
+            <input type="text" id="log-name" placeholder="Adınız" class="w-full bg-slate-100 p-4 rounded-2xl mb-3 outline-none focus:ring-2 ring-indigo-400">
+            <input type="password" id="log-pass" placeholder="Parol" class="w-full bg-slate-100 p-4 rounded-2xl mb-6 outline-none">
+            <button onclick="handleLogin()" class="btn-action w-full justify-center">Daxil Ol</button>
+        </div>
+    </div>
+
+    <aside class="sidebar py-8">
+        <div class="px-8 mb-10 flex items-center gap-3">
+            <div class="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center text-white"><i data-lucide="book-open"></i></div>
+            <span class="text-xl font-black text-slate-800">NM LMS</span>
+        </div>
+        <nav>
+            <div onclick="nav('home')" class="nav-item active" id="d-home"><i data-lucide="layout-grid"></i> Ana Səhifə</div>
+            <div onclick="nav('journal')" class="nav-item" id="d-journal"><i data-lucide="line-chart"></i> Jurnal</div>
+            <div onclick="nav('knowledge')" class="nav-item" id="d-knowledge"><i data-lucide="library"></i> Biliklər</div>
+            <div onclick="nav('schedule')" class="nav-item" id="d-schedule"><i data-lucide="calendar"></i> Cədvəl</div>
+            <div onclick="nav('homework')" class="nav-item" id="d-homework"><i data-lucide="pencil-ruler"></i> Tapşırıqlar</div>
+            <div onclick="nav('profile')" class="nav-item" id="d-profile"><i data-lucide="user"></i> Profil</div>
+        </nav>
+        <div id="admin-controls" class="hidden px-6 mt-10 space-y-2">
+            <p class="text-[10px] font-black text-slate-400 uppercase ml-4 mb-2">Ustad Paneli</p>
+            <button onclick="publishTask()" class="w-full bg-orange-500 text-white p-4 rounded-2xl font-bold text-sm flex items-center gap-3 shadow-lg"><i data-lucide="send" class="w-4 h-4"></i> Tapşırıq Göndər</button>
+        </div>
+    </aside>
+
+    <main class="main-content">
+        <section id="home" class="viewport active">
+            <div id="lesson-status" class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-slate-100 text-slate-500 text-xs font-bold mb-4 border border-slate-200 shadow-sm">
+                <span id="status-icon-box" class="relative flex h-2 w-2">
+                    <span class="relative inline-flex rounded-full h-2 w-2 bg-slate-400"></span>
+                </span>
+                <span id="status-text">Yoxlanılır...</span>
+            </div>
+
+            <h2 class="text-3xl font-black mb-8 text-slate-800">Salam, <span id="user-display">Tələbə</span>!</h2>
+            
+            <div class="glass-card p-8 border-l-[12px] border-indigo-600 mb-8">
+                <div class="flex items-center gap-2 mb-4">
+                    <span class="w-2 h-2 bg-indigo-600 rounded-full animate-pulse"></span>
+                    <span class="text-xs font-black text-indigo-600 uppercase">Günün Tapşırığı</span>
+                </div>
+                <h3 id="hw-title" class="text-2xl font-black mb-4 text-slate-800">Yüklənir...</h3>
+                <div id="hw-text-box" class="bg-slate-50 p-6 rounded-2xl text-slate-600 mb-6 text-[13px] whitespace-pre-line leading-relaxed">Məlumatlar oxunur...</div>
+                <button onclick="nav('homework')" class="btn-action">Cavab Yaz</button>
+            </div>
+        </section>
+
+        <section id="journal" class="viewport">
+            <h2 class="text-3xl font-black mb-2 text-slate-800">Elektron Jurnal</h2>
+            <p class="text-slate-400 mb-8 text-sm">Qiymətləriniz və dərsə davamiyyətiniz</p>
+            <div class="glass-card overflow-hidden">
+                <table class="w-full text-left border-collapse">
+                    <thead class="bg-slate-50">
+                        <tr class="text-[10px] uppercase font-bold text-slate-400">
+                            <th class="p-4">Fənn</th>
+                            <th class="p-4">Qiymət</th>
+                        </tr>
+                    </thead>
+                    <tbody id="journal-list" class="text-sm">
+                        <tr><td colspan="2" class="p-8 text-center text-slate-400 italic">Yüklənir...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section id="schedule" class="viewport">
+            <h2 class="text-3xl font-black mb-2 text-slate-800">Dərs Cədvəli</h2>
+            <p class="text-slate-400 mb-8 text-sm">Həftəlik canlı dərslərin siyahısı</p>
+            <div class="overflow-x-auto">
+                <table class="schedule-table">
+                    <thead>
+                        <tr class="text-left text-[10px] uppercase font-black text-slate-400">
+                            <th class="px-4">Gün</th><th class="px-4">Fənn</th><th class="px-4">Saat</th><th class="px-4">Keçid</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>1 gun</td><td>quran</td><td>20:00</td><td><a href="http://meet.google.com/bgv-iioz-rfg" class="btn-link">Qoşul</a></td></tr>
+                        <tr><td>2 gun</td><td>təcvid</td><td>16:00</td><td><a href="#" class="btn-link">Qoşul</a></td></tr>
+                        <tr><td>3 gun</td><td>quran</td><td>20:00</td><td><a href="#" class="btn-link">Qoşul</a></td></tr>
+                        <tr><td>4 gun</td><td>təcvid</td><td>16:00</td><td><a href="#" class="btn-link">Qoşul</a></td></tr>
+                        <tr><td>5 gun</td><td>quran</td><td>20:00</td><td><a href="#" class="btn-link">Qoşul</a></td></tr>
+                        <tr><td>6 gun</td><td>təcvid</td><td>16:00</td><td><a href="#" class="btn-link">Qoşul</a></td></tr>
+                        <tr><td>7 gun</td><td>tövhid</td><td>20:00</td><td><a href="#" class="btn-link">Qoşul</a></td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section id="knowledge" class="viewport">
+            <h2 class="text-3xl font-black mb-2 text-slate-800">Biliklər</h2>
+            <p class="text-slate-400 mb-8">Dərsləri və elmi məqalələri oxuyun</p>
+            <div class="grid gap-6 md:grid-cols-2">
+                <div onclick="openKnowledge('aqida')" class="glass-card p-8 cursor-pointer hover:border-indigo-400 transition group">
+                    <div class="w-14 h-14 bg-amber-100 text-amber-600 rounded-2xl flex items-center justify-center mb-6"><i data-lucide="sun"></i></div>
+                    <h3 class="text-xl font-black mb-2 text-slate-800">Aqidə</h3>
+                    <p class="text-sm text-slate-500">İman əsasları və Allahın sifətləri haqqında ətraflı.</p>
+                </div>
+                <div onclick="openKnowledge('fiqh')" class="glass-card p-8 cursor-pointer hover:border-indigo-400 transition group">
+                    <div class="w-14 h-14 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center mb-6"><i data-lucide="book"></i></div>
+                    <h3 class="text-xl font-black mb-2 text-slate-800">Fiqh</h3>
+                    <p class="text-sm text-slate-500">İbadətlər, dəstəmaz və namaz hökmləri.</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="knowledge-detail" class="viewport">
+            <button onclick="nav('knowledge')" class="flex items-center gap-2 text-slate-400 font-bold mb-6 hover:text-indigo-600 transition"><i data-lucide="arrow-left" class="w-4 h-4"></i> Geri qayıt</button>
+            <h2 id="k-title" class="text-4xl font-black mb-6">---</h2>
+            <div id="k-content" class="space-y-4"></div>
+        </section>
+
+        <section id="homework" class="viewport">
+            <h2 class="text-3xl font-black mb-4 text-slate-800">Tapşırıq</h2>
+            <div class="bg-indigo-50 p-6 rounded-3xl mb-6 border border-indigo-100">
+                <p class="text-[10px] font-bold text-indigo-500 uppercase mb-2">Mövzu:</p>
+                <h4 id="hw-title-sec" class="font-bold text-slate-800 mb-2 text-sm">---</h4>
+                <p id="hw-text-sec" class="text-[12px] text-slate-600 leading-relaxed">---</p>
+            </div>
+            <div class="glass-card p-8">
+                <textarea id="ans-text" rows="8" class="w-full bg-slate-50 rounded-[25px] p-6 mb-6 outline-none border border-slate-100 focus:ring-2 ring-indigo-200" placeholder="Cavabınızı bura yazın..."></textarea>
+                <button onclick="sendAnswer()" class="btn-action w-full justify-center">Cavabı Ustada Göndər <i data-lucide="send"></i></button>
+            </div>
+        </section>
+
+        <section id="profile" class="viewport text-center">
+            <h2 class="text-3xl font-black mb-10 text-left text-slate-800">Profil</h2>
+            <div class="glass-card p-10 max-w-md mx-auto">
+                <div class="w-24 h-24 bg-slate-100 rounded-full mx-auto mb-6 flex items-center justify-center text-indigo-600"><i data-lucide="user" class="w-12 h-12"></i></div>
+                <h3 id="prof-name" class="text-2xl font-black mb-1 italic text-slate-800">---</h3>
+                <p id="prof-role" class="text-slate-400 font-bold text-xs uppercase mb-10">Tələbə</p>
+                
+                <div id="admin-profile-actions" class="hidden mb-4 space-y-3">
+                    <button onclick="writeGrade()" class="w-full bg-indigo-600 text-white p-4 rounded-2xl font-bold flex items-center justify-center gap-2 shadow-lg"><i data-lucide="pen-tool" class="w-4 h-4"></i> Qiymət Yaz</button>
+                </div>
+
+                <button onclick="logout()" class="w-full bg-red-50 text-red-500 p-4 rounded-2xl font-bold hover:bg-red-100 transition">Hesabdan Çıxış</button>
+            </div>
+        </section>
+    </main>
+
+    <nav class="mobile-dock">
+        <button onclick="nav('home')" id="m-home" class="nav-item active !m-0 !p-3"><i data-lucide="layout-grid"></i></button>
+        <button onclick="nav('journal')" id="m-journal" class="nav-item !m-0 !p-3"><i data-lucide="line-chart"></i></button>
+        <button onclick="nav('knowledge')" id="m-knowledge" class="nav-item !m-0 !p-3"><i data-lucide="library"></i></button>
+        <button onclick="nav('schedule')" id="m-schedule" class="nav-item !m-0 !p-3"><i data-lucide="calendar"></i></button>
+        <button onclick="nav('homework')" id="m-homework" class="nav-item !m-0 !p-3"><i data-lucide="pencil-ruler"></i></button>
+        <button onclick="nav('profile')" id="m-profile" class="nav-item !m-0 !p-3"><i data-lucide="user"></i></button>
+    </nav>
+
+    <script>
+        // НАСТРОЙКИ:
+        const BOT_TOKEN = '8358797080:AAGamsFDYRfMn7FDWf4GKZDzJNHZj6eeDQg';
+        const CHANNEL_ID = '@skylineApp'; // КАНАЛ ДЛЯ ДЗ
+        const JOURNAL_CHANNEL_ID = '@GGgaErA'; // КАНАЛ ДЛЯ ЖУРНАЛА (замени если другой)
+        const ADMIN_CHAT_ID = '7076467876';
+
+        function updateLessonStatus() {
+            const now = new Date();
+            const day = now.getDay();
+            const time = now.getHours() * 60 + now.getMinutes();
+            const statusBox = document.getElementById('lesson-status');
+            const iconBox = document.getElementById('status-icon-box');
+            let isLessonTime = false;
+
+            if (day === 1 || day === 3 || day === 5 || day === 0) { 
+                if (time >= 1200 && time <= 1260) isLessonTime = true; 
+            } else if (day === 2 || day === 4 || day === 6) { 
+                if (time >= 960 && time <= 1020) isLessonTime = true;
+            }
+
+            if (isLessonTime) {
+                statusBox.className = "inline-flex items-center gap-2 px-4 py-2 rounded-full bg-green-100 text-green-700 text-xs font-bold mb-4 border border-green-200 shadow-sm shadow-green-100";
+                iconBox.innerHTML = `<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span><span class="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>`;
+                document.getElementById('status-text').innerText = "Canlı dərs davam edir";
+            } else {
+                statusBox.className = "inline-flex items-center gap-2 px-4 py-2 rounded-full bg-slate-100 text-slate-500 text-xs font-bold mb-4 border border-slate-200 shadow-sm";
+                iconBox.innerHTML = `<span class="relative inline-flex rounded-full h-2 w-2 bg-slate-400"></span>`;
+                document.getElementById('status-text').innerText = "Hazırda canlı dərs yoxdur";
+            }
+        }
+
+        async function loadJournal() {
+            const user = JSON.parse(localStorage.getItem('nm_user_pro'));
+            const listContainer = document.getElementById('journal-list');
+            try {
+                const channelName = JOURNAL_CHANNEL_ID.replace('@', '');
+                const res = await fetch(`https://api.codetabs.com/v1/proxy/?quest=${encodeURIComponent(`https://tg.i-c-a.su/rss/${channelName}`)}`);
+                const text = await res.text();
+                const xml = new DOMParser().parseFromString(text, "text/xml");
+                const items = Array.from(xml.querySelectorAll("item"));
+                // Ищем сообщение с именем студента именно в канале журнала
+                const userData = items.find(item => item.querySelector("description").textContent.includes(user.name + ":"));
+
+                if (userData) {
+                    const desc = userData.querySelector("description").textContent.replace(/<[^>]*>/g, '').trim();
+                    const marksPart = desc.split(':')[1].trim(); 
+                    const marksArray = marksPart.split(',');
+                    listContainer.innerHTML = marksArray.map(m => {
+                        const parts = m.split('-');
+                        return `<tr class="border-t border-slate-50"><td class="p-4 font-bold text-slate-700 text-xs">${parts[0].trim()}</td><td class="p-4"><span class="bg-indigo-100 text-indigo-600 px-3 py-1 rounded-lg font-black text-xs">${parts[1].trim()}</span></td></tr>`;
+                    }).join('');
+                } else {
+                    listContainer.innerHTML = `<tr><td colspan="2" class="p-8 text-center text-slate-400 italic">Qiymət tapılmadı</td></tr>`;
+                }
+            } catch (e) { listContainer.innerHTML = `<tr><td colspan="2" class="p-4 text-red-400 text-center">Xəta</td></tr>`; }
+        }
+
+        async function loadHW() {
+            try {
+                const channelName = CHANNEL_ID.replace('@', '');
+                const res = await fetch(`https://api.codetabs.com/v1/proxy/?quest=${encodeURIComponent(`https://tg.i-c-a.su/rss/${channelName}`)}`);
+                const text = await res.text();
+                const xml = new DOMParser().parseFromString(text, "text/xml");
+                const item = xml.querySelector("item");
+                if(item) {
+                    let fullText = item.querySelector("description").textContent.replace(/<[^>]*>/g, '').trim();
+                    let lines = fullText.split('\n');
+                    let title = lines[0].replace('📌', '').trim();
+                    let body = lines.slice(1).join('\n').trim();
+
+                    document.getElementById('hw-title').innerText = title || "Mövzu";
+                    document.getElementById('hw-text-box').innerText = body || fullText;
+                    
+                    document.getElementById('hw-title-sec').innerText = title || "Mövzu";
+                    document.getElementById('hw-text-sec').innerText = body || fullText;
+                }
+            } catch (e) { }
+        }
+
+        function handleLogin() {
+            const name = document.getElementById('log-name').value;
+            const pass = document.getElementById('log-pass').value;
+            if(!name) return;
+            const user = { name: name, role: (name === 'Ayyub' && pass === '1234') ? 'admin' : 'student' };
+            localStorage.setItem('nm_user_pro', JSON.stringify(user));
+            initApp(user);
+        }
+
+        function initApp(user) {
+            document.getElementById('auth-screen').style.display = 'none';
+            document.getElementById('user-display').innerText = user.name;
+            document.getElementById('prof-name').innerText = user.name;
+            document.getElementById('prof-role').innerText = (user.role === 'admin' ? 'Ustad' : 'Tələbə');
+            if(user.role === 'admin') {
+                document.getElementById('admin-controls').classList.remove('hidden');
+                document.getElementById('admin-profile-actions').classList.remove('hidden');
+            }
+            loadHW();
+            updateLessonStatus();
+            setInterval(updateLessonStatus, 60000);
+            lucide.createIcons();
+        }
+
+        async function writeGrade() {
+            const { value: formValues } = await Swal.fire({
+                title: 'Qiymət Yaz',
+                html: '<input id="gr-name" class="swal2-input" placeholder="Tələbə adı">' +
+                     '<input id="gr-marks" class="swal2-input" placeholder="Quran-5, Tecvid-4">',
+                confirmButtonText: 'Göndər',
+                preConfirm: () => [document.getElementById('gr-name').value, document.getElementById('gr-marks').value]
+            });
+            if (formValues && formValues[0] && formValues[1]) {
+                const msg = `${formValues[0]}: ${formValues[1]}`;
+                // Отправляем именно в канал ЖУРНАЛА
+                await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ chat_id: JOURNAL_CHANNEL_ID, text: msg })
+                });
+                Swal.fire('Uğurlu!', 'Qiymət jurnala yazıldı', 'success');
+            }
+        }
+
+        async function sendAnswer() {
+            const u = JSON.parse(localStorage.getItem('nm_user_pro'));
+            const text = document.getElementById('ans-text').value;
+            if(!text) return;
+            const opId = Math.floor(Math.random()*900000)+100000;
+            await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ chat_id: ADMIN_CHAT_ID, text: `📝 **YENİ CAVAB**\n👤 Tələbə: ${u.name}\n💬 Cavab: ${text}` })
+            });
+            Swal.fire('Göndərildi!', `ID: #${opId}`, 'success');
+            document.getElementById('ans-text').value = "";
+        }
+
+        function nav(id) {
+            document.querySelectorAll('.viewport').forEach(v => v.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            document.getElementById('d-'+id)?.classList.add('active');
+            document.getElementById('m-'+id)?.classList.add('active');
+            if(id === 'journal') loadJournal();
+            lucide.createIcons();
+            window.scrollTo(0,0);
+        }
+
+        function logout() { localStorage.removeItem('nm_user_pro'); location.reload(); }
+
+        const KNOWLEDGE_DB = {
+            aqida: { name: "Aqidə", lessons: [{ t: "Tövhid", c: "Allahı təkləşdirməkdir." }] },
+            fiqh: { name: "Fiqh", lessons: [{ t: "Namaz", c: "Dinin dirəyidir." }] }
+        };
+
+        function openKnowledge(id) {
+            const data = KNOWLEDGE_DB[id];
+            document.getElementById('k-title').innerText = data.name;
+            document.getElementById('k-content').innerHTML = data.lessons.map(l => `
+                <div class="glass-card p-6 border-l-4 border-indigo-500">
+                    <h4 class="text-xl font-bold mb-3">${l.t}</h4>
+                    <p class="text-slate-600 text-sm">${l.c}</p>
+                </div>
+            `).join('');
+            nav('knowledge-detail');
+        }
+
+        async function publishTask() {
+            const { value: formValues } = await Swal.fire({
+                title: 'Yeni Tapşırıq',
+                html: '<input id="sw-title" class="swal2-input" placeholder="Mövzu"><textarea id="sw-text" class="swal2-textarea" placeholder="Mətn..."></textarea>',
+                confirmButtonText: 'Göndər',
+                preConfirm: () => [document.getElementById('sw-title').value, document.getElementById('sw-text').value]
+            });
+            if (formValues && formValues[0] && formValues[1]) {
+                const msg = `📌 *${formValues[0]}*\n\n${formValues[1]}`;
+                // Отправляем именно в канал ДЗ
+                await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ chat_id: CHANNEL_ID, text: msg, parse_mode: 'Markdown' })
+                });
+                Swal.fire('Göndərildi!', '', 'success');
+                loadHW();
+            }
+        }
+
+        window.onload = () => {
+            const saved = localStorage.getItem('nm_user_pro');
+            if(saved) initApp(JSON.parse(saved));
+        }
+    </script>
+</body>
+</html>
