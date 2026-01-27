@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>NESİHETLER MEDRESESİ LMS</title>
+    <title>Nəsihatlər Mədrəsəsi | Luxury LMS</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -34,6 +34,10 @@
         .glass-card { background: white; border-radius: 28px; border: 1px solid rgba(122, 79, 43, 0.05); box-shadow: 0 10px 30px rgba(122, 79, 43, 0.03); }
         .btn-action { background: var(--primary); color: #F5E9D7; border-radius: 16px; padding: 14px 24px; font-weight: 700; transition: 0.3s; display: inline-flex; align-items: center; gap: 8px; border: none; cursor: pointer; }
         .btn-action:active { transform: scale(0.96); }
+
+        /* Новая кнопка входа на урок */
+        .btn-join { background: linear-gradient(135deg, #7A4F2B, #A67C52); color: white; padding: 18px; border-radius: 22px; width: 100%; display: flex; align-items: center; justify-content: center; gap: 10px; font-weight: 800; margin-bottom: 20px; box-shadow: 0 10px 25px rgba(122, 79, 43, 0.2); animation: pulse 2s infinite; }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.02); } 100% { transform: scale(1); } }
 
         .grade-badge { padding: 4px 10px; border-radius: 10px; font-weight: 800; font-size: 12px; margin-right: 4px; display: inline-block; margin-bottom: 4px; }
         .g-green { background: #E8F5E9; color: #2E7D32; }
@@ -74,6 +78,11 @@
         <section id="home" class="viewport active">
             <h2 class="text-3xl font-black mb-6 text-[#7A4F2B]">Salam, <span id="user-display">...</span>!</h2>
             
+            <a href="http://meet.google.com/bgv-iioz-rfg" target="_blank" class="btn-join">
+                <i data-lucide="video"></i>
+                <span>Dərsə Qoşul (Canlı)</span>
+            </a>
+
             <div id="admin-fast-actions" class="hidden grid grid-cols-2 gap-3 mb-8">
                 <button onclick="writeGradeWizard()" class="bg-[#7A4F2B] text-[#F5E9D7] p-5 rounded-[24px] font-bold flex flex-col items-center gap-2 shadow-xl">
                     <i data-lucide="plus-circle"></i> Qiymət Yaz
@@ -304,4 +313,5 @@
         }
     </script>
 </body>
-</html>
+                                                                                       </html>
+                                                                                       
